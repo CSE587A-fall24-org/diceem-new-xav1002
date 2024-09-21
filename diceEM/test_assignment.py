@@ -44,6 +44,7 @@ class TestDiceEM(unittest.TestCase):
             [0.5, 0.5], [Die([1 / 6] * 6), Die([1 / 6] * 6)])
         actual_1 = e_step(experiment_data, bag_of_dice)
         expected_1 = np.array([[500.0] * 6, [500.0] * 6])
+        print(actual_1)
         np.testing.assert_almost_equal(actual_1, expected_1, decimal=5)
 
         # Test with different face probabilities. The first die should get

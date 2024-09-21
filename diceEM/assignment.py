@@ -61,8 +61,9 @@ def diceEM(experiment_data: List[NDArray[np.int_]],  # pylint: disable=C0103
 
         # YOUR CODE HERE. SET REQUIRED VARIABLES BY CALLING e-step AND m-step.
         # E-step: compute the expected counts given current parameters        
-  
+        expectation = e_step(experiment_data,bag_of_dice)
         # M-step: update the parameters given the expected counts
+        updated_bag_of_dice = m_step(expectation)
       
         prev_bag_of_dice: BagOfDice = bag_of_dice
         bag_of_dice = updated_bag_of_dice
@@ -105,9 +106,32 @@ def e_step(experiment_data: List[NDArray[np.int_]],
     # Then combine the posterior for each die type with the observed counts for 
     # the current draw to get the expected counts for each die type on this draw.
     # To get the total expected counts for each type, you sum the expected
-    # counts for each type over all the draws.  
+    # counts for each type over all the draws. 
 
     # PUT YOUR CODE HERE, FOLLOWING THE DIRECTIONS ABOVE
+    type_1_counts: list = []
+    type_2_counts: list = []
+    for draw in experiment_data:
+        posterior_1 = dice_posterior(draw,bag_of_dice)
+        posterior_2 = 1 - posterior_1
+
+        I_func = []
+        for x in draw:
+            # I_func.append(x/sum(draw))
+            I_func.append(x)
+
+        I_func_2 = []
+        for x_2 in draw:
+            # I_func_2.append(x_2/sum(draw))
+            I_func_2.append(x_2)
+
+        type_1_counts.append(list(map(lambda x: x*posterior_1,I_func)))
+        type_2_counts.append(list(map(lambda x: x*posterior_2,I_func_2)))
+
+    for idx, counts in enumerate(type_1_counts):
+        for idx_2, counts_2 in enumerate(counts):
+            expected_counts[0,idx_2] = expected_counts[0,idx_2] + type_1_counts[idx][idx_2]
+            expected_counts[1,idx_2] = expected_counts[1,idx_2] + type_2_counts[idx][idx_2]
 
     return expected_counts
 
@@ -134,10 +158,11 @@ def m_step(expected_counts_by_die: NDArray[np.float_]):
     updated_type_1_frequency = np.sum(expected_counts_by_die[0])
     updated_type_2_frequency = np.sum(expected_counts_by_die[1])
 
-    # REPLACE EACH NONE BELOW WITH YOUR CODE. 
-    updated_priors = None
-    updated_type_1_face_probs = None
-    updated_type_2_face_probs = None
+    # REPLACE EACH NONE BELOW WITH YOUR CODE.
+    updated_priors = [updated_type_1_frequency/(updated_type_1_frequency+updated_type_2_frequency),
+                      updated_type_2_frequency/(updated_type_1_frequency+updated_type_2_frequency)]
+    updated_type_1_face_probs = expected_counts_by_die[0]/updated_type_1_frequency
+    updated_type_2_face_probs = expected_counts_by_die[1]/updated_type_2_frequency
     
     updated_bag_of_dice = BagOfDice(updated_priors,
                                     [Die(updated_type_1_face_probs),
